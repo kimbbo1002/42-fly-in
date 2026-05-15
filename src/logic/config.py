@@ -5,7 +5,6 @@ from pydantic import (
     BaseModel,
     field_validator,
     model_validator,
-    ValidationError
 )
 from enums import ConfigOptions, Colors
 
