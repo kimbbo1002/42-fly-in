@@ -1,4 +1,5 @@
-from typing import List
+from typing import List, Dict, Optional
+from collections import deque
 from config import Config, ZoneType
 from drone import Drone
 
@@ -20,7 +21,7 @@ class Node:
         self.y = y
         self.capacity = capacity
         self.occupation: List[Drone] = []
-        self.distance: int
+        self.distance = -1
 
     def can_move_in(self) -> bool:
         if self.type == ZoneType.BLOCKED:
@@ -35,7 +36,7 @@ class Node:
         drone.y = self.y
     
     def move_out(self, drone: Drone):
-        self.occupation.pop(drone)
+        self.occupation.remove(drone)
 
 
 
@@ -62,52 +63,54 @@ class Graph:
                     hub.name, hub.color, hub.zone,
                     hub.x, hub.y, hub.max_drones
                 )
-            if hub.name not in ["start_hub", "end_hub"]:
-                self.nodes.append(node)
-            else:
-                if hub.name is "start_hub":
-                    self.start = node
-                else:
-                    self.end = node
+            self.nodes.append
+            if hub.name == "start_hub":
+                self.start = node
+            elif hub.name == "end_hub":
+                self.end = node
         for connec in config.connections:
-            self.edges = Edge(connec.a, connec.b, connec.max_link_capacity)
+            self.edges.append(Edge(connec.a, connec.b, connec.max_link_capacity))
     
     def find_connection(self, node: Node) -> List[Node]:
         connections = []
-        names = []
+        neigbor_names = []
         for edge in self.edges:
             if edge.a == node.name:
-                names.append(edge.a)
+                neigbor_names.append(edge.b)
+            elif edge.b == node.name:
+                neigbor_names.append(edge.a)
         
-        for name in names:
+        for name in neigbor_names:
             for n in self.nodes:
-                if name == n.name:
+                if n.name == name:
                     connections.append(n)
+                    break
         return connections
 
-    def min_distance(self, node: Node) -> int:
-        distances = []
-        curr = node
-        while (curr.name is not "end_hub"):
-            
+    def min_distance(self) -> int:
+        self.end.distance = 0
+        queue = deque([self.end])
 
-            
-            
-        
+        # bfs to find mininmum distance from end_hub
+        while queue:
+            curr = queue.popleft()
+            for neighbor in self.find_connection(curr):
+                if neighbor.distance == -1:
+                    neighbor.distance = curr.distance + 1
+                    queue.append(neighbor)
+
 
     def start_sim(self, config: Config) -> None:
         graph = Graph()
         graph.init_graph(config)
 
-        # placing all drones at start
-        start = self.start
+        # initializing & placing all drones at start
         for i in range(0, graph.nb_drone):
-            start.move_in(Drone(i + 1, start.x, start.y))
+            self.start.move_in(Drone(i + 1, self.start.x, self.start.y))
         
-        # calculate minimum moves from end for all nodes
-        for node in self.nodes:
+        # calculating minimum distance for all nodes
+        graph.min_distance()
 
-        
         # main simulation loop
         while(len(self.end.occupation) != self.nb_drone):
-            pass
+            
