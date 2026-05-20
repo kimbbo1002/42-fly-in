@@ -81,7 +81,7 @@ class Config(BaseModel):
                 raise ValueError(
                     f"Connection links undefined zones: {conn.a}-{conn.b}"
                 )
-            pair = frozenset([conn.a, conn.b])
+            pair = tuple([conn.a, conn.b])
             if pair in connections:
                 raise ValueError(
                     f"Duplicate connection detected: {conn.a}-{conn.b}"

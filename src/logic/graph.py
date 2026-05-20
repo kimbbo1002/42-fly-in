@@ -33,7 +33,7 @@ class Graph:
             b = self.find_node(connec.b)
             self.edges.append(
                 Edge(a, b, connec.max_link_capacity))
-    
+
     def find_node(self, name: str) -> Node:
         for node in self.nodes:
             if node.name == name:
@@ -58,31 +58,39 @@ class Graph:
                     if neighbor.distance == -1:
                         neighbor.distance = curr.distance + 1
                         if neighbor.type == ZoneType.RESTRICTED:
-                            neighbor.distance += 3
+                            neighbor.distance += 1
                         queue.append(neighbor)
 
     def sim_turn(self) -> None:
-        for drone in self.drones:
+        for drone in sorted(self.drones, key=lambda d: d.node.distance):
             if drone.node == self.end:
+                continue
+            if drone.wait == 1:
                 continue
             next = drone.get_next_move(self.find_connection(drone.node),
                                        self.edges)
             if not next:
                 continue
+            if next.type == ZoneType.RESTRICTED:
+                drone.wait = 0
             connec = Edge.find_edge(drone.node, next, self.edges)
             connec.occupation.add(drone)
             drone.node.occupation.remove(drone)
             drone.node = next
         for edge in self.edges:
             target = edge.b
-            for drone in edge.occupation:
+            for drone in edge.occupation.copy():
                 if target.type == ZoneType.RESTRICTED:
-                    drone.restriction = True
-                drone.x, drone.y = target.x, target.y
-            target.tmp_space.update(edge.occupation)
-            edge.occupation.clear()
+                    drone.wait += 1
+                if drone.wait == 1:
+                    drone.x = (drone.x + target.x) / 2
+                    drone.y = (drone.y + target.y) / 2
+                else:
+                    drone.x, drone.y = target.x, target.y
+                    target.occupation.add(drone)
+                    edge.occupation.remove(drone)
+                    drone.wait = -1
         self.turn += 1
-        print(f"turn: {self.turn}")
 
     def start_sim(self, config: Config) -> None:
         self.init_graph(config)
@@ -100,6 +108,3 @@ class Graph:
         # main simulation loop
         while len(self.end.occupation) != self.nb_drone:
             self.sim_turn()
-            for node in self.nodes:
-                node.occupation.update(node.tmp_space)
-                node.tmp_space.clear()

@@ -9,28 +9,25 @@ class Drone:
         self.x = x
         self.y = y
         self.node: Node = None
-        self.restriction = False
+        self.wait = -1
 
     def get_next_move(
             self, connecs: List[Node], edges: List[Edge]
-    ) -> Optional[Edge]:
+    ) -> Optional[Node]:
         ret: Node = None
         min = float('inf')
-        if self.restriction is True:
-            self.restriction = False
-            return None
         for connec in connecs:
             edge = Edge.find_edge(self.node, connec, edges)
             if (
-                connec.type == ZoneType.BLOCKED or len(connec.occupation) + 1
+                connec.type == ZoneType.BLOCKED or edge.exp_occupation() + 1
                 > connec.capacity or len(edge.occupation) + 1 > edge.capacity
             ):
                 continue
-            elif connec.type == ZoneType.PRIORITY:
-                if connec.distance != -1:
-                    return connec
             elif connec.distance == -1:
                 continue
+            elif (connec.type == ZoneType.PRIORITY
+                  and connec.distance < self.node.distance):
+                return connec
             elif min > connec.distance:
                 min = connec.distance
                 ret = connec
@@ -58,7 +55,6 @@ class Node:
         self.y = y
         self.capacity = capacity
         self.occupation: Set[Drone] = set()
-        self.tmp_space: Set[Drone] = set()
         self.distance = -1
         self.edge_capacity = 0
 
@@ -75,3 +71,10 @@ class Edge:
         for edge in edges:
             if edge.a == a and edge.b == b:
                 return edge
+
+    def exp_occupation(self) -> int:
+        count = 0
+        for drone in self.occupation:
+            if drone.wait == -1:
+                count += 1
+        return count
