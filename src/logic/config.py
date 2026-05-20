@@ -6,7 +6,6 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from enums import ConfigOptions, Colors
 
 
 class ZoneType(Enum):
@@ -14,6 +13,7 @@ class ZoneType(Enum):
     BLOCKED = "blocked"
     RESTRICTED = "restricted"
     PRIORITY = "priority"
+
 
 class Hub(BaseModel):
     name: str
@@ -30,12 +30,13 @@ class Hub(BaseModel):
                 "Hub zone names cannot include space or dash"
             )
         return v
-    
+
     @field_validator("max_drones")
     def validate_capacity(cls, v):
         if v <= 0:
             raise ValueError("max_drones must be a positive integer")
         return v
+
 
 class Connection(BaseModel):
     a: str
@@ -66,12 +67,12 @@ class Config(BaseModel):
             raise ValueError("All hub names must be unique")
         if len(set(coords)) != len(coords):
             raise ValueError("All hub coordinates must be unique")
-        
+
         # check if start / end are defined
         if self.start not in names:
             raise ValueError("Start hub is not defined")
         if self.end not in names:
-            raise ValueError("End hub is not defined")        
+            raise ValueError("End hub is not defined")
 
         # check duplicate connections
         connections = set()
@@ -80,13 +81,13 @@ class Config(BaseModel):
                 raise ValueError(
                     f"Connection links undefined zones: {conn.a}-{conn.b}"
                 )
-            pair = set([conn.a, conn.b])
+            pair = frozenset([conn.a, conn.b])
             if pair in connections:
                 raise ValueError(
                     f"Duplicate connection detected: {conn.a}-{conn.b}"
                 )
             connections.add(pair)
-        
+
         return self
 
 
@@ -105,7 +106,8 @@ def parse_metadata(metadata: str) -> Dict[str, Any]:
 
 
 def parse_raw_config(file_name: str) -> Dict[str, Any]:
-    raw = {"hubs": [], "connections": [], "nb_drones": None, "start": None, "end": None}
+    raw = {"hubs": [], "connections": [], "nb_drones": None,
+           "start": None, "end": None}
 
     with open(file_name, "r") as file:
         for line_num, line in enumerate(file, 1):
@@ -124,18 +126,24 @@ def parse_raw_config(file_name: str) -> Dict[str, Any]:
                             'nb_drones must be a positive intger'
                         )
                 elif key in ['start_hub', 'end_hub', 'hub']:
-                    parts = val.split()
-                    if len(parts) > 4:
+                    bracket_idx = val.find('[')
+                    if bracket_idx == -1:
+                        parts = val.split()
+                        meta = None
+                    else:
+                        parts = val[:bracket_idx].split()
+                        meta = val[bracket_idx:]
+                    if len(parts) != 3:
                         raise ValueError(f"Too many arguments: {parts}")
                     name, x, y = parts[0], int(parts[1]), int(parts[2])
                     hub_data = {"name": name, "x": x, "y": y}
-                    if len(parts) > 3:
-                        hub_data.update(parse_metadata(parts[3]))
-                        raw['hubs'].append(hub_data)
-                        if key == "start_hub":
-                            raw['start'] = name
-                        elif key == "end_hub":
-                            raw["end"] = name
+                    if meta:
+                        hub_data.update(parse_metadata(meta))
+                    raw['hubs'].append(hub_data)
+                    if key == "start_hub":
+                        raw['start'] = name
+                    elif key == "end_hub":
+                        raw["end"] = name
                 elif key == "connection":
                     connec, _, meta = val.partition(' ')
                     a, b = connec.split('-')
@@ -150,11 +158,14 @@ def parse_raw_config(file_name: str) -> Dict[str, Any]:
 
 def check_config() -> Config:
     if len(sys.argv) < 2:
-        raise ValueError("Usage: python script.py <config_file>")
+        raise ValueError(
+            "\033[1;33mUsage: python script.py"
+            " <config_file>\033[0m"
+        )
     try:
         raw_data = parse_raw_config(sys.argv[1])
         return Config(**raw_data)
     except Exception as e:
         raise ValueError(
-            f"{Colors.RED}CONFIG ERROR: {Colors.RESET}{e}"
+            f"\033[0;31mCONFIG ERROR: \033[0m{e}"
         )
