@@ -13,13 +13,14 @@ class Graph:
         self.start: Node = None
         self.end: Node = None
         self.turn = 0
+        self.output = ""
 
     def init_graph(self, config: Config) -> None:
         self.nb_drone = config.nb_drones
         for hub in config.hubs:
             node = Node(
                     hub.name, hub.color, hub.zone,
-                    hub.x, hub.y, hub.max_drones
+                    hub.x, hub.y, hub.max_drones, 0
                 )
             self.nodes.append(node)
             if hub.name == config.start:
@@ -28,6 +29,7 @@ class Graph:
             elif hub.name == config.end:
                 self.end = node
                 self.end.capacity = self.nb_drone
+
         for connec in config.connections:
             a = self.find_node(connec.a)
             b = self.find_node(connec.b)
@@ -61,6 +63,12 @@ class Graph:
                             neighbor.distance += 1
                         queue.append(neighbor)
 
+    def save_trace(self) -> None:
+        for drone in self.drones:
+            drone.trace.append(tuple([drone.x, drone.y]))
+        for node in self.nodes:
+            node.trace.append(len(node.occupation))
+
     def sim_turn(self) -> None:
         for drone in sorted(self.drones, key=lambda d: d.node.distance):
             if drone.node == self.end:
@@ -85,11 +93,16 @@ class Graph:
                 if drone.wait == 1:
                     drone.x = (drone.x + target.x) / 2
                     drone.y = (drone.y + target.y) / 2
+                    self.output += (
+                        f"D{drone.id}-<{drone.node.name}-{target.name}>"
+                    )
                 else:
                     drone.x, drone.y = target.x, target.y
                     target.occupation.add(drone)
                     edge.occupation.remove(drone)
                     drone.wait = -1
+                    self.output += f"D{drone.id}-<{target.name}>"
+        self.save_trace()
         self.turn += 1
 
     def start_sim(self, config: Config) -> None:
@@ -106,5 +119,12 @@ class Graph:
         self.min_distance()
 
         # main simulation loop
+        self.save_trace()
         while len(self.end.occupation) != self.nb_drone:
             self.sim_turn()
+            self.output += "\n"
+
+    def print_output(self) -> None:
+        file_name = "output.txt"
+        with open(file_name, "w") as file:
+            file.write(self.output)

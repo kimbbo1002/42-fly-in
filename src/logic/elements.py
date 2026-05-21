@@ -10,6 +10,7 @@ class Drone:
         self.y = y
         self.node: Node = None
         self.wait = -1
+        self.trace = []
 
     def get_next_move(
             self, connecs: List[Node], edges: List[Edge]
@@ -28,7 +29,9 @@ class Drone:
             elif (connec.type == ZoneType.PRIORITY
                   and connec.distance < self.node.distance):
                 return connec
-            elif min > connec.distance:
+            elif (
+                min > connec.distance and self.node.distance > connec.distance
+            ):
                 min = connec.distance
                 ret = connec
 
@@ -46,7 +49,8 @@ class Node:
             type: ZoneType,
             x: int,
             y: int,
-            capacity: int
+            capacity: int,
+            trace: int
     ) -> None:
         self.name = name
         self.color = color
@@ -57,6 +61,9 @@ class Node:
         self.occupation: Set[Drone] = set()
         self.distance = -1
         self.edge_capacity = 0
+        self.trace = []
+
+        self.trace.append(tuple([self.x, self.y]))
 
 
 class Edge:
@@ -65,6 +72,7 @@ class Edge:
         self.b = b
         self.capacity = capacity
         self.occupation: Set[Drone] = set()
+        self.trace = []
 
     @staticmethod
     def find_edge(a: Node, b: Node, edges: List[Edge]) -> Edge:
