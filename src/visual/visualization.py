@@ -24,7 +24,7 @@ node_colors = {
     "grey": arcade.color.ASH_GREY,
     "brown": arcade.color.BROWN,
     "cyan": arcade.color.CYAN,
-    "rainbow": arcade.color.ELECTRIC_INDIGO,  # no true rainbow; closest vivid fallback
+    "rainbow": arcade.color.ELECTRIC_INDIGO,
 }
 
 
@@ -43,7 +43,9 @@ class GameView(arcade.Window):
         # warn once at startup about unknown colors, not every frame
         for node in graph.nodes:
             if node.color not in node_colors:
-                print(f"Warning: Cannot find color '{node.color}', setting to default 'white'")
+                print(
+                    f"\033[1;33mWarning: Cannot find color '{node.color}', "
+                    "setting to default 'white'\033[0m")
 
         # compute scaling from actual node coordinate bounds
         xs = [n.x for n in graph.nodes]
