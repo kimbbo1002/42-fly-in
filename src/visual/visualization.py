@@ -1,5 +1,6 @@
 import arcade
 from ..logic import Graph
+from typing import Tuple
 
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
@@ -25,6 +26,8 @@ node_colors = {
     "brown": arcade.color.BROWN,
     "cyan": arcade.color.CYAN,
     "rainbow": arcade.color.ELECTRIC_INDIGO,
+    "gold": arcade.color.GOLD,
+    "magenta": arcade.color.DEEP_MAGENTA,
 }
 
 
@@ -37,7 +40,7 @@ class GameView(arcade.Window):
         self.max_turn = len(self.graph.drones[0].trace) - 1
         self.time_accum = 0.0
         self.turn_interval = 0.5  # seconds per turn during auto-play
-        self.auto_play = True
+        self.auto_play = False
         arcade.set_background_color(arcade.color.BLIZZARD_BLUE)
 
         # warn once at startup about unknown colors, not every frame
@@ -65,7 +68,7 @@ class GameView(arcade.Window):
         n = len(graph.nodes)
         self.node_radius = max(18, min(usable_w / (n * 2.5), 40))
 
-    def to_screen_coords(self, x: float, y: float):
+    def to_screen_coords(self, x: float, y: float) -> Tuple[float, float]:
         screen_x = self.offset_x + x * self.scale_x
         screen_y = self.offset_y + y * self.scale_y
         return screen_x, screen_y
@@ -80,7 +83,7 @@ class GameView(arcade.Window):
                 self.time_accum = 0.0
                 self.turn += 1
 
-    def on_key_press(self, key, modifiers) -> None:
+    def on_key_press(self, key: int, modifiers: int) -> None:
         if key == arcade.key.RIGHT:
             self.auto_play = False
             if self.turn < self.max_turn:
@@ -147,6 +150,6 @@ class GameView(arcade.Window):
         )
 
 
-def sim_visual(graph: Graph):
+def sim_visual(graph: Graph) -> None:
     view = GameView(graph)
     view.run()

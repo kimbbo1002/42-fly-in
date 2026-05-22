@@ -10,8 +10,8 @@ class Graph:
         self.edges: List[Edge] = []
         self.drones: List[Drone] = []
         self.nb_drone: int
-        self.start: Node = None
-        self.end: Node = None
+        self.start: Node | None = None
+        self.end: Node | None = None
         self.turn = 0
         self.output = ""
 
@@ -37,95 +37,103 @@ class Graph:
                 Edge(a, b, connec.max_link_capacity))
 
     def find_node(self, name: str) -> Node:
+        ret: Node
         for node in self.nodes:
             if node.name == name:
-                return node
+                ret = node
+                break
+        return ret
 
-    def find_connection(self, node: Node) -> List[Node]:
-        neighbors = []
+    def find_connection(self, node: Node | None) -> List[Node | None]:
+        neighbors: List[Node | None] = []
         for edge in self.edges:
             if edge.a == node:
                 neighbors.append(edge.b)
         return neighbors
 
     def min_distance(self) -> None:
-        self.end.distance = 0
-        queue = deque([self.end])
+        if self.end:
+            self.end.distance = 0
+            queue = deque([self.end])
 
-        while queue:
-            curr = queue.popleft()
-            for edge in self.edges:
-                if edge.b == curr:
-                    neighbor = edge.a
-                    if neighbor.distance == -1:
-                        neighbor.distance = curr.distance + 1
-                        if neighbor.type == ZoneType.RESTRICTED:
-                            neighbor.distance += 1
-                        queue.append(neighbor)
+            while queue:
+                curr = queue.popleft()
+                for edge in self.edges:
+                    if edge.b == curr:
+                        neighbor = edge.a
+                        if neighbor.distance == -1:
+                            neighbor.distance = curr.distance + 1
+                            if neighbor.type == ZoneType.RESTRICTED:
+                                neighbor.distance += 1
+                            queue.append(neighbor)
 
-    def save_trace_drone(self) -> None:
+    def save_trace(self) -> None:
         for drone in self.drones:
-            drone.trace.append(tuple([drone.x, drone.y]))
-    
-    def save_trace_node(self) -> None:
+            drone.trace.append((drone.x, drone.y))
         for node in self.nodes:
             node.trace.append(len(node.occupation))
 
     def sim_turn(self) -> None:
-        for drone in sorted(self.drones, key=lambda d: d.node.distance):
-            if drone.node == self.end:
-                continue
-            if drone.wait == 1:
-                continue
-            next = drone.get_next_move(self.find_connection(drone.node),
-                                       self.edges)
-            if not next:
-                continue
-            if next.type == ZoneType.RESTRICTED:
-                drone.wait = 0
-            connec = Edge.find_edge(drone.node, next, self.edges)
-            connec.occupation.add(drone)
-            drone.node.occupation.remove(drone)
-            drone.node = next
+        for drone in sorted(
+            self.drones,
+            key=lambda d: d.node.distance if d.node else d.id
+        ):
+            if drone.node:
+                if drone.node == self.end:
+                    continue
+                if drone.wait == 1:
+                    continue
+                next = drone.get_next_move(self.find_connection(drone.node),
+                                           self.edges)
+                if not next:
+                    continue
+                if next.type == ZoneType.RESTRICTED:
+                    drone.wait = 0
+                connec = Edge.find_edge(drone.node, next, self.edges)
+                connec.occupation.add(drone)
+                drone.node.occupation.remove(drone)
+                drone.node = next
         for edge in self.edges:
             target = edge.b
             for drone in edge.occupation.copy():
-                if target.type == ZoneType.RESTRICTED:
-                    drone.wait += 1
-                if drone.wait == 1:
-                    drone.x = (drone.x + target.x) / 2
-                    drone.y = (drone.y + target.y) / 2
-                    self.output += (
-                        f"D{drone.id}-<{drone.node.name}-{target.name}>"
-                    )
-                else:
-                    drone.x, drone.y = target.x, target.y
-                    target.occupation.add(drone)
-                    edge.occupation.remove(drone)
-                    drone.wait = -1
-                    self.output += f"D{drone.id}-<{target.name}>"
-        self.save_trace_drone()
-        self.save_trace_node()
+                if drone.node:
+                    if target.type == ZoneType.RESTRICTED:
+                        drone.wait += 1
+                    if drone.wait == 1:
+                        drone.x = (drone.x + target.x) / 2
+                        drone.y = (drone.y + target.y) / 2
+                        self.output += (
+                            f"D{drone.id}-<{drone.node.name}-{target.name}>"
+                        )
+                    else:
+                        drone.x, drone.y = target.x, target.y
+                        target.occupation.add(drone)
+                        edge.occupation.remove(drone)
+                        drone.wait = -1
+                        self.output += f"D{drone.id}-<{target.name}>"
+        self.save_trace()
         self.turn += 1
 
     def start_sim(self, config: Config) -> None:
         self.init_graph(config)
 
         # initializing & placing all drones at start
-        for i in range(0, self.nb_drone):
-            self.drones.append(Drone(i + 1, self.start.x, self.start.y))
-        self.start.occupation.update(self.drones)
-        for drone in self.drones:
-            drone.node = self.start
+        if self.start:
+            for i in range(0, self.nb_drone):
+                self.drones.append(Drone(i + 1, self.start.x, self.start.y))
+            self.start.occupation.update(self.drones)
+            for drone in self.drones:
+                drone.node = self.start
 
         # calculating minimum distance for all nodes
         self.min_distance()
 
         # main simulation loop
-        self.save_trace_drone()
-        while len(self.end.occupation) != self.nb_drone:
-            self.sim_turn()
-            self.output += "\n"
+        self.save_trace()
+        if self.end:
+            while len(self.end.occupation) != self.nb_drone:
+                self.sim_turn()
+                self.output += "\n"
 
     def print_output(self) -> None:
         file_name = "output.txt"

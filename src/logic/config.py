@@ -24,7 +24,7 @@ class Hub(BaseModel):
     max_drones: int = 1
 
     @field_validator("name")
-    def validate_name(cls, v):
+    def validate_name(cls, v: str) -> str:
         if ' ' in v or '-' in v:
             raise ValueError(
                 "Hub zone names cannot include space or dash"
@@ -32,7 +32,7 @@ class Hub(BaseModel):
         return v
 
     @field_validator("max_drones")
-    def validate_capacity(cls, v):
+    def validate_capacity(cls, v: int) -> int:
         if v <= 0:
             raise ValueError("max_drones must be a positive integer")
         return v
@@ -44,7 +44,7 @@ class Connection(BaseModel):
     max_link_capacity: int = 1
 
     @field_validator("max_link_capacity")
-    def validate_capacity(cls, v):
+    def validate_capacity(cls, v: int) -> int:
         if v <= 0:
             raise ValueError("max_link_capacity must be a positive integer")
         return v
@@ -96,18 +96,21 @@ def parse_metadata(metadata: str) -> Dict[str, Any]:
     items = metadata.strip("[] ").split()
     for item in items:
         try:
+            value: Any
             key, val = item.split('=')
             if key == "max_drones":
-                val = int(val)
-            data[key] = val
+                value = int(val)
+            else:
+                value = val
+            data[key] = value
         except ValueError:
             raise ValueError(f"Invalid metadata format: {item}")
     return data
 
 
 def parse_raw_config(file_name: str) -> Dict[str, Any]:
-    raw = {"hubs": [], "connections": [], "nb_drones": None,
-           "start": None, "end": None}
+    raw: Dict[str, Any] = {"hubs": [], "connections": [], "nb_drones": None,
+                           "start": None, "end": None}
 
     with open(file_name, "r") as file:
         for line_num, line in enumerate(file, 1):

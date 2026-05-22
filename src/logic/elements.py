@@ -1,39 +1,44 @@
 from __future__ import annotations
-from typing import List, Set, Optional
+from typing import List, Set, Optional, Tuple
 from .config import ZoneType
 
 
 class Drone:
-    def __init__(self, id: int, x: int, y: int):
+    def __init__(self, id: int, x: float, y: float):
         self.id = id
         self.x = x
         self.y = y
-        self.node: Node = None
+        self.node: Node | None = None
         self.wait = -1
-        self.trace = []
+        self.trace: List[Tuple[float, float]] = []
 
     def get_next_move(
-            self, connecs: List[Node], edges: List[Edge]
+            self, connecs: List[Node | None], edges: List[Edge]
     ) -> Optional[Node]:
-        ret: Node = None
+        ret: Node | None = None
         min = float('inf')
         for connec in connecs:
-            edge = Edge.find_edge(self.node, connec, edges)
-            if (
-                connec.type == ZoneType.BLOCKED or edge.exp_occupation() + 1
-                > connec.capacity or len(edge.occupation) + 1 > edge.capacity
-            ):
-                continue
-            elif connec.distance == -1:
-                continue
-            elif (connec.type == ZoneType.PRIORITY
-                  and connec.distance < self.node.distance):
-                return connec
-            elif (
-                min > connec.distance and self.node.distance > connec.distance
-            ):
-                min = connec.distance
-                ret = connec
+            if connec and self.node:
+                edge = Edge.find_edge(self.node, connec, edges)
+                if (
+                    connec.type == ZoneType.BLOCKED
+                    or edge.exp_occupation() + 1 > connec.capacity
+                    or len(edge.occupation) + 1 > edge.capacity
+                ):
+                    continue
+                elif connec.distance == -1:
+                    continue
+                elif (
+                    connec.type == ZoneType.PRIORITY
+                    and connec.distance < self.node.distance
+                ):
+                    return connec
+                elif (
+                    min > connec.distance
+                    and self.node.distance > connec.distance
+                ):
+                    min = connec.distance
+                    ret = connec
 
         if ret:
             return ret
@@ -61,9 +66,7 @@ class Node:
         self.occupation: Set[Drone] = set()
         self.distance = -1
         self.edge_capacity = 0
-        self.trace = []
-
-        self.trace.append(tuple([self.x, self.y]))
+        self.trace: List[int] = []
 
 
 class Edge:
@@ -72,13 +75,18 @@ class Edge:
         self.b = b
         self.capacity = capacity
         self.occupation: Set[Drone] = set()
-        self.trace = []
+        self.trace: List[int] = []
 
     @staticmethod
-    def find_edge(a: Node, b: Node, edges: List[Edge]) -> Edge:
+    def find_edge(
+        a: Node | None, b: Node | None, edges: List[Edge]
+    ) -> Edge:
+        ret: Edge
         for edge in edges:
             if edge.a == a and edge.b == b:
-                return edge
+                ret = edge
+                break
+        return ret
 
     def exp_occupation(self) -> int:
         count = 0
