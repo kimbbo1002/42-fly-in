@@ -14,12 +14,12 @@ debug:
 	$(PYTHON) -m pdb $(MAIN) $(ARG)
 
 lint:
-	uv run flake8
-	uv run mypy . --explicit-package-bases --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+	flake8
+	mypy . --explicit-package-bases --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 
 lint-strict:
-	uv run flake8
-	uv run mypy . --explicit-package-bases --strict
+	flake8
+	mypy . --explicit-package-bases --strict
 
 clean:
 	rm -rf `find . -type d -name "__pycache__"`
@@ -28,5 +28,6 @@ clean:
 fclean: clean
 	rm -rf uv.lock
 	rm -rf .venv
+	rm -rf output.txt
 
 .PHONY: install run pick debug lint lint-strict clean fclean

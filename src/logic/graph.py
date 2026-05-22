@@ -63,9 +63,11 @@ class Graph:
                             neighbor.distance += 1
                         queue.append(neighbor)
 
-    def save_trace(self) -> None:
+    def save_trace_drone(self) -> None:
         for drone in self.drones:
             drone.trace.append(tuple([drone.x, drone.y]))
+    
+    def save_trace_node(self) -> None:
         for node in self.nodes:
             node.trace.append(len(node.occupation))
 
@@ -102,7 +104,8 @@ class Graph:
                     edge.occupation.remove(drone)
                     drone.wait = -1
                     self.output += f"D{drone.id}-<{target.name}>"
-        self.save_trace()
+        self.save_trace_drone()
+        self.save_trace_node()
         self.turn += 1
 
     def start_sim(self, config: Config) -> None:
@@ -119,7 +122,7 @@ class Graph:
         self.min_distance()
 
         # main simulation loop
-        self.save_trace()
+        self.save_trace_drone()
         while len(self.end.occupation) != self.nb_drone:
             self.sim_turn()
             self.output += "\n"
