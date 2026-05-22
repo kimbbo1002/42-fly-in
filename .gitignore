@@ -1,5 +1,5 @@
 maps.tar.gz
-maps/
 __pycache__
 poetry.lock
 output.txt
+.venv
