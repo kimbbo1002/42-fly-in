@@ -61,6 +61,8 @@ class Graph:
                 for edge in self.edges:
                     if edge.b == curr:
                         neighbor = edge.a
+                        if neighbor.type == ZoneType.BLOCKED:
+                            continue
                         if neighbor.distance == -1:
                             neighbor.distance = curr.distance + 1
                             if neighbor.type == ZoneType.RESTRICTED:
@@ -128,6 +130,11 @@ class Graph:
         # calculating minimum distance for all nodes
         self.min_distance()
 
+        if self.start and self.start.distance == -1:
+            raise ValueError(
+                "\033[0;31mCONFIG ERROR:\033[0m"
+                "Invalid map: No passage found."
+            )
         # main simulation loop
         self.save_trace()
         if self.end:
