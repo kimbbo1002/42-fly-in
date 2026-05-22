@@ -20,7 +20,7 @@ class Graph:
         for hub in config.hubs:
             node = Node(
                     hub.name, hub.color, hub.zone,
-                    hub.x, hub.y, hub.max_drones, 0
+                    hub.x, hub.y, hub.max_drones
                 )
             self.nodes.append(node)
             if hub.name == config.start:
@@ -76,6 +76,9 @@ class Graph:
             node.trace.append(len(node.occupation))
 
     def sim_turn(self) -> None:
+        for node in self.nodes:
+            if node:
+                node.expect = 0
         for drone in sorted(
             self.drones,
             key=lambda d: d.node.distance if d.node else d.id

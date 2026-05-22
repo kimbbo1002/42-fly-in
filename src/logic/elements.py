@@ -20,10 +20,14 @@ class Drone:
         for connec in connecs:
             if connec and self.node:
                 edge = Edge.find_edge(self.node, connec, edges)
+                total_incoming = (
+                    edge.exp_occupation() + connec.expect + len(connec.occupation)
+                )
                 if (
                     connec.type == ZoneType.BLOCKED
-                    or edge.exp_occupation() + 1 > connec.capacity
+                    or total_incoming + 1 > connec.capacity
                     or len(edge.occupation) + 1 > edge.capacity
+                    or self.node.distance < connec.distance
                 ):
                     continue
                 elif connec.distance == -1:
@@ -32,18 +36,17 @@ class Drone:
                     connec.type == ZoneType.PRIORITY
                     and connec.distance < self.node.distance
                 ):
+                    connec.expect += 1
                     return connec
                 elif (
                     min > connec.distance
-                    and self.node.distance > connec.distance
                 ):
                     min = connec.distance
                     ret = connec
 
         if ret:
-            return ret
-        else:
-            return None
+            ret.expect += 1
+        return ret
 
 
 class Node:
@@ -54,8 +57,7 @@ class Node:
             type: ZoneType,
             x: int,
             y: int,
-            capacity: int,
-            trace: int
+            capacity: int
     ) -> None:
         self.name = name
         self.color = color
@@ -67,6 +69,7 @@ class Node:
         self.distance = -1
         self.edge_capacity = 0
         self.trace: List[int] = []
+        self.expect: int = 0
 
 
 class Edge:
