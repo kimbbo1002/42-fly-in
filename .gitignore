@@ -1,5 +1,6 @@
 maps.tar.gz
 __pycache__
-poetry.lock
 output.txt
 .venv
+.python-version
+uv.lock
