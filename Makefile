@@ -28,6 +28,6 @@ clean:
 fclean: clean
 	rm -rf uv.lock
 	rm -rf .venv
-	rm -rf output.txt
+	rm -rf output.txt .python-version
 
 .PHONY: install run pick debug lint lint-strict clean fclean
