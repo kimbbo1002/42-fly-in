@@ -21,7 +21,8 @@ class Drone:
             if connec and self.node:
                 edge = Edge.find_edge(self.node, connec, edges)
                 total_incoming = (
-                    edge.exp_occupation() + connec.expect + len(connec.occupation)
+                    edge.exp_occupation() + connec.expect
+                    + len(connec.occupation)
                 )
                 if (
                     connec.type == ZoneType.BLOCKED
