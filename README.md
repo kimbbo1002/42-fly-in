@@ -12,6 +12,7 @@ This project implements an efficient drone routing system that navigates multipl
 ### Makefile Rules
 * `make`: Installs project dependencies using `uv` and sets up the virtual environment.
 * `make run`: Runs the main program loop (automatically boots the map selection interface).
+* `make bench`: Runs the program for all maps in `maps/` and prints the total number of turns for each. (visualization is not launched)
 * `make debug`: Runs the built-in Python debugger (`pdb`) for stepping through route evaluations.
 * `make lint` / `make lint-strict`: Performs static syntax checking and type analysis using `flake8` and `mypy`.
 * `make fclean`: Wipes the local virtual environment and removes lock files (`uv.lock`, `.venv/`).
