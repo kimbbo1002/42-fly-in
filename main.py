@@ -7,7 +7,8 @@ def main() -> None:
         graph = Graph()
         graph.start_sim(config)
         graph.print_output()
-        sim_visual(graph)
+        if graph.bench is False:
+            sim_visual(graph)
     except Exception as e:
         print(e)
 

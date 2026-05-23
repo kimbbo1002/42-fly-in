@@ -1,6 +1,7 @@
 PYTHON = uv run python3
 MAIN = main.py
 FILE = launcher.py
+BENCH = launcher_bench.py
 VENV = .venv
 ARG ?=
 
@@ -9,6 +10,9 @@ install:
 
 run:
 	uv run $(FILE)
+
+bench:
+	uv run $(BENCH)
 
 debug:
 	$(PYTHON) -m pdb $(MAIN) $(ARG)

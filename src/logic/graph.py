@@ -14,6 +14,7 @@ class Graph:
         self.end: Node | None = None
         self.turn = 0
         self.output = ""
+        self.bench = False
 
     def init_graph(self, config: Config) -> None:
         self.nb_drone = config.nb_drones
@@ -35,6 +36,8 @@ class Graph:
             b = self.find_node(connec.b)
             self.edges.append(
                 Edge(a, b, connec.max_link_capacity))
+        if config.bench == 1:
+            self.bench = True
 
     def find_node(self, name: str) -> Node:
         ret: Node
@@ -149,3 +152,5 @@ class Graph:
         file_name = "output.txt"
         with open(file_name, "w") as file:
             file.write(self.output)
+        if self.bench:
+            print(f": {self.turn} turns")

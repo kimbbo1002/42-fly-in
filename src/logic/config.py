@@ -56,6 +56,7 @@ class Config(BaseModel):
     end: str
     hubs: List[Hub]
     connections: List[Connection]
+    bench: int = 0
 
     @model_validator(mode="after")
     def validate_logic(self) -> "Config":
@@ -160,14 +161,25 @@ def parse_raw_config(file_name: str) -> Dict[str, Any]:
 
 
 def check_config() -> Config:
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2 or len(sys.argv) > 3:
         raise ValueError(
-            "\033[1;33mUsage: python script.py"
-            " <config_file>\033[0m"
+            "\033[1;33mUsage: python script.py <config_file>"
+            "(for total compilation): python script.py"
+            "<config_file --bench\033[0m\n"
         )
     try:
         raw_data = parse_raw_config(sys.argv[1])
-        return Config(**raw_data)
+        config = Config(**raw_data)
+        if len(sys.argv) == 3:
+            if sys.argv[2] == "--bench":
+                config.bench = 1
+            else:
+                raise ValueError(
+                    "\033[1;33mUsage: python script.py <config_file>"
+                    "(for total compilation): python script.py"
+                    "<config_file --bench\033[0m\n"
+                )
+        return config
     except Exception as e:
         raise ValueError(
             f"\033[0;31mCONFIG ERROR: \033[0m{e}"
