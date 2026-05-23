@@ -8,8 +8,3 @@ dependencies = [
     "pydantic",
     "arcade",
 ]
-[dependency-groups]
-dev = [
-    "flake8",
-    "mypy",
-]
