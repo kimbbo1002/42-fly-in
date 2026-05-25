@@ -9,7 +9,7 @@ class Graph:
         self.nodes: List[Node] = []
         self.edges: List[Edge] = []
         self.drones: List[Drone] = []
-        self.nb_drone: int
+        self.nb_drone: int = 0
         self.start: Node | None = None
         self.end: Node | None = None
         self.turn = 0
@@ -118,7 +118,7 @@ class Graph:
                         target.occupation.add(drone)
                         edge.occupation.remove(drone)
                         drone.wait = -1
-                        self.output += f"D{drone.id}-<{target.name}>"
+                        self.output += f"D{drone.id}-<{target.name}> "
         self.save_trace()
         self.turn += 1
 

@@ -112,14 +112,18 @@ def parse_metadata(metadata: str) -> Dict[str, Any]:
 def parse_raw_config(file_name: str) -> Dict[str, Any]:
     raw: Dict[str, Any] = {"hubs": [], "connections": [], "nb_drones": None,
                            "start": None, "end": None}
+    connections: Dict[str, str] = {}
 
     with open(file_name, "r") as file:
+        i = 0
         for line_num, line in enumerate(file, 1):
             line = line.strip()
-            if not line or line.startswith("#"):
+            if not line or line.startswith("#") or line.startswith("\n"):
                 continue
-            if line_num == 1 and not line.startswith("nb_drones"):
-                raise ValueError("First line must define 'nb_drones'")
+            if i == 0:
+                if not line.startswith("nb_drones"):
+                    raise ValueError("First line must define 'nb_drones'")
+                i += 1
             key, _, val = line.partition(':')
             val = val.strip()
             try:
@@ -127,7 +131,7 @@ def parse_raw_config(file_name: str) -> Dict[str, Any]:
                     raw['nb_drones'] = int(val)
                     if raw['nb_drones'] <= 0:
                         raise ValueError(
-                            'nb_drones must be a positive intger'
+                            'nb_drones must be a positive integer'
                         )
                 elif key in ['start_hub', 'end_hub', 'hub']:
                     bracket_idx = val.find('[')
@@ -152,6 +156,14 @@ def parse_raw_config(file_name: str) -> Dict[str, Any]:
                     connec, _, meta = val.partition(' ')
                     a, b = connec.split('-')
                     connec_data = {"a": a, "b": b}
+                    if (
+                        connections.get(a) == b
+                        or connections.get(b) == a
+                    ):
+                        raise ValueError(
+                            f"Connection duplicate found: {a}-{b}"
+                        )
+                    connections[a] = b
                     if meta:
                         connec_data.update(parse_metadata(meta))
                     raw["connections"].append(connec_data)

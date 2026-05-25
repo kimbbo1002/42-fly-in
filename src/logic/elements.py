@@ -16,7 +16,7 @@ class Drone:
             self, connecs: List[Node | None], edges: List[Edge]
     ) -> Optional[Node]:
         ret: Node | None = None
-        min = float('inf')
+        min_dist = float('inf')
         for connec in connecs:
             if connec and self.node:
                 edge = Edge.find_edge(self.node, connec, edges)
@@ -40,9 +40,9 @@ class Drone:
                     connec.expect += 1
                     return connec
                 elif (
-                    min > connec.distance
+                    min_dist > connec.distance
                 ):
-                    min = connec.distance
+                    min_dist = connec.distance
                     ret = connec
 
         if ret:
